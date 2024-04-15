@@ -26,5 +26,8 @@
   "peerDependencies": {
     "@sveltejs/kit": ">=1.0.0 <3.0.0",
     "@sentry/sveltekit": ">=7.0.0"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   }
 }
