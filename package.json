@@ -1,0 +1,30 @@
+{
+  "name": "sveltekit-cache-control",
+  "version": "1.0.0",
+  "description": "A simple way to add control caching in your SvelteKit project.",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/born05/sveltekit-cache-control.git"
+  },
+  "keywords": [],
+  "author": "Born05",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/born05/sveltekit-cache-control/issues"
+  },
+  "homepage": "https://github.com/born05/sveltekit-cache-control#readme",
+  "dependencies": {
+    "ioredis": "^5.3.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  },
+  "peerDependencies": {
+    "@sveltejs/kit": ">=1.0.0 <3.0.0",
+    "@sentry/sveltekit": ">=7.0.0"
+  }
+}
