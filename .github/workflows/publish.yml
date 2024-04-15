@@ -3,9 +3,6 @@ name: Publish Package to Github packages
 on:
   release:
     types: [created]
-  push:
-    branches:
-      - main
 
 jobs:
   publish-github-package:

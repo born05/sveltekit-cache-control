@@ -21,7 +21,7 @@ const DEFAULT_OPTIONS: Options = {
   maxAge: 60,
   public: true,
   private: true,
-  routes: ['*.'],
+  routes: ['.*'],
   methods: ['GET'],
   noCacheSearchParams: ['preview'],
   etagCacheKey: '',
