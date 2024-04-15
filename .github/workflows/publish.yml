@@ -11,8 +11,7 @@ jobs:
         with:
           node-version: '21.x'
           registry-url: https://npm.pkg.github.com/
-      - run: |
-          npm run build
-          npm publish
+      - uses: icrawl/action-tsc@v1
+      - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
