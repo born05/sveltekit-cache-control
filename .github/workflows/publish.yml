@@ -1,19 +1,27 @@
 name: Publish Package to Github packages
+
 on:
   release:
     types: [created]
+  push:
+    branches:
+      - main
+
 jobs:
   publish-github-package:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '21.x'
+          node-version: 21
           registry-url: https://npm.pkg.github.com/
       - run: |
-          npm install --include=dev
+          npm ci --include=dev
           npm run build
-          npm publish
+          npm publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{secrets.GH_REGISTRY_PACKAGES}}
+          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
