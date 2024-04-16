@@ -53,6 +53,7 @@ export function cacheControlHandle(
     if (
       options.enabled &&
       options.maxAge &&
+      !event.request.headers.has('Authorization') &&
       options.methods.includes(event.request.method) &&
       response.status === 200 &&
       options.routes.some((route) =>
