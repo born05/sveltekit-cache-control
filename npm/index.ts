@@ -24,7 +24,7 @@ const DEFAULT_OPTIONS: Options = {
   routes: ['.*'],
   methods: ['GET'],
   noCacheSearchParams: ['preview'],
-  etagCacheKey: '',
+  etagCacheKey: 'cache-control-etag',
 };
 
 export function cacheControlHandle(
