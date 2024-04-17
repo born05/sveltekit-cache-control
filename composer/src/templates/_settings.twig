@@ -1,0 +1,16 @@
+{# @var plugin \born05\craftcachecontrol\Plugin #}
+{# @var settings \born05\craftcachecontrol\models\Settings #}
+
+{% import '_includes/forms.twig' as forms %}
+
+{{ forms.textField({
+  first: true,
+  label: 'ETag cache key',
+  name: 'etagCacheKey',
+  value: settings.etagCacheKey
+}) }}
+{{ forms.textField({
+  label: 'ETag cache TTL (in seconds)',
+  name: 'etagTTL',
+  value: settings.etagTTL
+}) }}

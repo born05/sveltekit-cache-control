@@ -1,0 +1,38 @@
+{
+  "folders": [
+    {
+      "path": "npm"
+    },
+    {
+      "path": "composer"
+    },
+    {
+      "name": "root",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "window.title": "${activeEditorShort}${separator}Cache control packages",
+    "editor.formatOnSave": true,
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/vendor": true,
+      "**/gql/types.ts": true
+    },
+    "stylelint.enable": true
+  },
+  "extensions": {
+    "recommendations": [
+      "svelte.svelte-vscode",
+      "esbenp.prettier-vscode",
+      "csstools.postcss",
+      "bmewburn.vscode-intelephense-client",
+      "valeryanm.vscode-phpsab",
+      "dbaeumer.vscode-eslint",
+      "editorconfig.editorconfig",
+      "bradlc.vscode-tailwindcss",
+      "stylelint.vscode-stylelint",
+      "graphql.vscode-graphql"
+    ]
+  }
+}

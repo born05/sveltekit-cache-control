@@ -1,0 +1,29 @@
+{
+  "name": "born05/craft-cache-control",
+  "type": "craft-plugin",
+  "require": {
+    "php": ">=8.0.2",
+    "craftcms/cms": "^4.8.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "born05\\craftcachecontrol\\": "src/"
+    }
+  },
+  "extra": {
+    "handle": "cache-control",
+    "name": "Cache control",
+    "developer": "Born05",
+    "documentationUrl": ""
+  },
+  "config": {
+    "sort-packages": true,
+    "platform": {
+      "php": "8.0.2"
+    },
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true,
+      "craftcms/plugin-installer": true
+    }
+  }
+}
