@@ -3,14 +3,14 @@ import Redis from 'ioredis';
 import { captureException } from '@sentry/sveltekit';
 
 interface Options {
-  enabled: boolean; // default: true
-  mustRevalidate: boolean; // default: true
-  maxAge: number; // default: 0
-  public: boolean; // default: true
-  private: boolean; // default: true
-  routes: string[]; // default: ['*']
-  methods: string[]; // default: ['GET']
-  noCacheSearchParams: string[]; // default: ['preview']
+  enabled: boolean;
+  mustRevalidate: boolean;
+  maxAge: number;
+  public: boolean;
+  private: boolean;
+  routes: string[];
+  methods: string[];
+  noCacheSearchParams: string[];
   etagCacheKey: string;
 }
 
@@ -67,8 +67,8 @@ export function cacheControlHandle(
         [
           !options.public && options.private && 'private',
           options.public && !options.private && 'public',
-          options.mustRevalidate && 'must-revalidate',
           `max-age=${options.maxAge}`,
+          options.mustRevalidate && 'must-revalidate',
         ]
           .filter(Boolean)
           .join(', ')
