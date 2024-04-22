@@ -1,5 +1,4 @@
 import type { Handle } from '@sveltejs/kit';
-import { dev } from '$app/environment';
 import Redis from 'ioredis';
 import { captureException } from '@sentry/sveltekit';
 
@@ -16,7 +15,7 @@ interface Options {
 }
 
 const DEFAULT_OPTIONS: Options = {
-  enabled: !dev,
+  enabled: true,
   mustRevalidate: true,
   maxAge: 60,
   public: true,
