@@ -16,10 +16,10 @@ interface Options {
 
 const DEFAULT_OPTIONS: Options = {
   enabled: true,
-  mustRevalidate: true,
+  mustRevalidate: false,
   maxAge: 60,
   public: true,
-  private: true,
+  private: false,
   routes: ['.*'],
   methods: ['GET'],
   noCacheSearchParams: ['preview'],
@@ -34,6 +34,10 @@ export function cacheControlHandle(
     ...DEFAULT_OPTIONS,
     ...opt,
   };
+
+  if (!options.enabled) {
+    return async ({ event, resolve }) => resolve(event);
+  }
 
   const redis = new Redis(redisUrl);
 
@@ -56,7 +60,7 @@ export function cacheControlHandle(
       options.methods.includes(event.request.method) &&
       response.status === 200 &&
       options.routes.some((route) =>
-        new RegExp(route).test(event.url.toString())
+        new RegExp(route).test(event.url.pathname)
       ) &&
       options.noCacheSearchParams.every(
         (param) => !event.url.searchParams.has(param)
