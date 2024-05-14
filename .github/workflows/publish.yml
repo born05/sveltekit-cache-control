@@ -1,8 +1,9 @@
-name: Publish NPM and Composer Packages
+name: Publish to GitHub Packages
+run-name: Release ${{ github.ref_name }}
 
 on:
-  release:
-    types: [created]
+  push:
+    tags: ["*"]
 
 jobs:
   publish-npm:
