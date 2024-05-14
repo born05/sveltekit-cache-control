@@ -54,11 +54,9 @@ export function cacheControlHandle(
     const response = await resolve(event);
 
     if (
-      options.enabled &&
-      options.maxAge &&
-      !event.request.headers.has('Authorization') &&
-      options.methods.includes(event.request.method) &&
       response.status === 200 &&
+      options.methods.includes(event.request.method) &&
+      !event.request.headers.has('Authorization') &&
       options.routes.some((route) =>
         new RegExp(route).test(event.url.pathname)
       ) &&
