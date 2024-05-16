@@ -1,6 +1,6 @@
 {
   "name": "born05/craft-cache-control",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "type": "craft-plugin",
   "require": {
     "php": ">=8.0.2",
