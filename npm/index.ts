@@ -11,12 +11,12 @@ interface HeaderOptions {
   private: boolean;
   noCache: boolean;
   etagCacheKey: string;
+  noCacheSearchParams: string[];
 }
 
 interface HandleOptions extends HeaderOptions {
   routes: string[];
   methods: string[];
-  noCacheSearchParams: string[];
 }
 
 const DEFAULT_HEADER_OPTIONS: HeaderOptions = {
@@ -28,13 +28,13 @@ const DEFAULT_HEADER_OPTIONS: HeaderOptions = {
   private: false,
   noCache: false,
   etagCacheKey: 'cache-control-etag',
+  noCacheSearchParams: ['preview'],
 };
 
 const DEFAULT_HANDLE_OPTIONS: HandleOptions = {
   ...DEFAULT_HEADER_OPTIONS,
   routes: ['.*'],
   methods: ['GET'],
-  noCacheSearchParams: ['preview'],
 };
 
 let redis: Redis | null = null;
@@ -71,31 +71,38 @@ export async function createCacheControlResponse(
     initRedis(redisUrl);
   }
 
-  response.headers.set(
-    'Cache-Control',
-    [
-      options.private && 'private',
-      options.public && 'public',
-      options.maxAge !== null && `max-age=${options.maxAge}`,
-      options.sMaxAge !== null && `s-maxage=${options.maxAge}`,
-      options.mustRevalidate && 'must-revalidate',
-    ]
-      .filter(Boolean)
-      .join(', ')
-  );
+  if (
+    !request.headers.has('Authorization') &&
+    options.noCacheSearchParams.every(
+      (param) => !new URL(request.url).searchParams.has(param)
+    )
+  ) {
+    response.headers.set(
+      'Cache-Control',
+      [
+        options.private && 'private',
+        options.public && 'public',
+        options.maxAge !== null && `max-age=${options.maxAge}`,
+        options.sMaxAge !== null && `s-maxage=${options.maxAge}`,
+        options.mustRevalidate && 'must-revalidate',
+      ]
+        .filter(Boolean)
+        .join(', ')
+    );
 
-  if (options.etagCacheKey && redis) {
-    const etag = await redis.get(options.etagCacheKey);
+    if (options.etagCacheKey && redis) {
+      const etag = await redis.get(options.etagCacheKey);
 
-    if (etag) {
-      response.headers.set('ETag', etag);
+      if (etag) {
+        response.headers.set('ETag', etag);
 
-      const requestEtag = request.headers.get('If-None-Match');
-      if (requestEtag === etag) {
-        return new Response(null, {
-          status: 304,
-          statusText: 'Not Modified',
-        });
+        const requestEtag = request.headers.get('If-None-Match');
+        if (requestEtag === etag) {
+          return new Response(null, {
+            status: 304,
+            statusText: 'Not Modified',
+          });
+        }
       }
     }
   }
@@ -126,13 +133,7 @@ export function cacheControlHandle(
     if (
       response.status === 200 &&
       options.methods.includes(event.request.method) &&
-      !event.request.headers.has('Authorization') &&
-      options.routes.some((route) =>
-        new RegExp(route).test(event.url.pathname)
-      ) &&
-      options.noCacheSearchParams.every(
-        (param) => !event.url.searchParams.has(param)
-      )
+      options.routes.some((route) => new RegExp(route).test(event.url.pathname))
     ) {
       const resp = await createCacheControlResponse(
         redisUrl,
