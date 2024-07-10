@@ -60,7 +60,7 @@ export async function createCacheControlResponse(
   redisUrl: string,
   opt: Partial<HeaderOptions>,
   request: Request,
-  response: Response = new Response()
+  response: Response | (() => Promise<Response> | Response) | null = null
 ) {
   const options = {
     ...DEFAULT_HEADER_OPTIONS,
@@ -70,6 +70,8 @@ export async function createCacheControlResponse(
   if (!redis) {
     initRedis(redisUrl);
   }
+
+  const headers: Record<string, string> = {};
 
   if (
     !request.headers.has('Authorization') &&
@@ -89,25 +91,28 @@ export async function createCacheControlResponse(
           });
         }
 
-        response.headers.set('ETag', etag);
+        headers['ETag'] = etag;
       }
     }
 
-    response.headers.set(
-      'Cache-Control',
-      [
-        options.private && 'private',
-        options.public && 'public',
-        options.maxAge !== null && `max-age=${options.maxAge}`,
-        options.sMaxAge !== null && `s-maxage=${options.maxAge}`,
-        options.mustRevalidate && 'must-revalidate',
-      ]
-        .filter(Boolean)
-        .join(', ')
-    );
+    headers['Cache-Control'] = [
+      options.private && 'private',
+      options.public && 'public',
+      options.maxAge !== null && `max-age=${options.maxAge}`,
+      options.sMaxAge !== null && `s-maxage=${options.maxAge}`,
+      options.mustRevalidate && 'must-revalidate',
+    ]
+      .filter(Boolean)
+      .join(', ');
   }
 
-  return response;
+  const resp = !response ? new Response() : typeof response === 'function' ? await response() : response;
+
+  Object.entries(headers).forEach(([key, value]) => {
+    resp.headers.set(key, value);
+  });
+
+  return resp;
 }
 
 export function cacheControlHandle(
@@ -135,14 +140,12 @@ export function cacheControlHandle(
       options.methods.includes(event.request.method) &&
       options.routes.some((route) => new RegExp(route).test(event.url.pathname))
     ) {
-      const resp = await createCacheControlResponse(
+      return await createCacheControlResponse(
         redisUrl,
         options,
         event.request,
-        response
+        response,
       );
-
-      if (resp) return resp;
     }
 
     return response;
