@@ -95,6 +95,8 @@ class CacheControl {
         }
       }
     }
+
+    return response;
   }
 
   public cacheControlHandle(redisUrl: string, opt: Partial<Options>): Handle {
