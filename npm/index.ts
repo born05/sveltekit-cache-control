@@ -1,4 +1,4 @@
-import type { Handle } from '@sveltejs/kit';
+import type { Handle, MaybePromise } from '@sveltejs/kit';
 import Redis from 'ioredis';
 import { captureException } from '@sentry/sveltekit';
 
@@ -60,7 +60,7 @@ export async function createCacheControlResponse(
   redisUrl: string,
   opt: Partial<HeaderOptions>,
   request: Request,
-  response: Response | (() => Promise<Response> | Response) | null = null
+  response: Response | (() => MaybePromise<Response>) | null = null,
 ) {
   const options = {
     ...DEFAULT_HEADER_OPTIONS,
@@ -75,9 +75,7 @@ export async function createCacheControlResponse(
 
   if (
     !request.headers.has('Authorization') &&
-    options.noCacheSearchParams.every(
-      (param) => !new URL(request.url).searchParams.has(param)
-    )
+    options.noCacheSearchParams.every((param) => !new URL(request.url).searchParams.has(param))
   ) {
     if (options.etagCacheKey && redis) {
       const etag = await redis.get(options.etagCacheKey);
@@ -106,7 +104,13 @@ export async function createCacheControlResponse(
       .join(', ');
   }
 
-  const resp = !response ? new Response() : typeof response === 'function' ? await response() : response;
+  const resp = !response
+    ? new Response()
+    : typeof response === 'function'
+      ? await response()
+      : response;
+
+  if (resp.status !== 200) return resp;
 
   Object.entries(headers).forEach(([key, value]) => {
     resp.headers.set(key, value);
@@ -115,10 +119,7 @@ export async function createCacheControlResponse(
   return resp;
 }
 
-export function cacheControlHandle(
-  redisUrl: string,
-  opt: Partial<HandleOptions>
-): Handle {
+export function cacheControlHandle(redisUrl: string, opt: Partial<HandleOptions>): Handle {
   const options = {
     ...DEFAULT_HANDLE_OPTIONS,
     ...opt,
@@ -133,21 +134,15 @@ export function cacheControlHandle(
   }
 
   return async ({ event, resolve }) => {
-    const response = await resolve(event);
-
     if (
-      response.status === 200 &&
       options.methods.includes(event.request.method) &&
       options.routes.some((route) => new RegExp(route).test(event.url.pathname))
     ) {
-      return await createCacheControlResponse(
-        redisUrl,
-        options,
-        event.request,
-        response,
+      return await createCacheControlResponse(redisUrl, options, event.request, () =>
+        resolve(event),
       );
     }
 
-    return response;
+    return resolve(event);
   };
 }
