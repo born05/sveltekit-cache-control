@@ -2,7 +2,7 @@ import type { Handle } from '@sveltejs/kit';
 import Redis from 'ioredis';
 import { captureException } from '@sentry/sveltekit';
 
-interface Options {
+interface HeaderOptions {
   enabled: boolean;
   mustRevalidate: boolean;
   maxAge: number | null;
@@ -10,13 +10,16 @@ interface Options {
   public: boolean;
   private: boolean;
   noCache: boolean;
-  routes: string[];
-  methods: string[];
-  noCacheSearchParams: string[];
   etagCacheKey: string;
 }
 
-const DEFAULT_OPTIONS: Options = {
+interface HandleOptions extends HeaderOptions {
+  routes: string[];
+  methods: string[];
+  noCacheSearchParams: string[];
+}
+
+const DEFAULT_HEADER_OPTIONS: HeaderOptions = {
   enabled: true,
   mustRevalidate: false,
   maxAge: 60,
@@ -24,10 +27,14 @@ const DEFAULT_OPTIONS: Options = {
   public: true,
   private: false,
   noCache: false,
+  etagCacheKey: 'cache-control-etag',
+}
+
+const DEFAULT_HANDLE_OPTIONS: HandleOptions = {
+  ...DEFAULT_HEADER_OPTIONS,
   routes: ['.*'],
   methods: ['GET'],
   noCacheSearchParams: ['preview'],
-  etagCacheKey: 'cache-control-etag',
 };
 
 class CacheControl {
@@ -54,12 +61,12 @@ class CacheControl {
 
   public async createResponse(
     redisUrl: string,
-    opt: Partial<Options>,
+    opt: Partial<HeaderOptions>,
     request: Request,
     response: Response = new Response()
   ) {
     const options = {
-      ...DEFAULT_OPTIONS,
+      ...DEFAULT_HEADER_OPTIONS,
       ...opt,
     };
 
@@ -99,9 +106,9 @@ class CacheControl {
     return response;
   }
 
-  public cacheControlHandle(redisUrl: string, opt: Partial<Options>): Handle {
+  public handle(redisUrl: string, opt: Partial<HandleOptions>): Handle {
     const options = {
-      ...DEFAULT_OPTIONS,
+      ...DEFAULT_HANDLE_OPTIONS,
       ...opt,
     };
 
@@ -142,4 +149,6 @@ class CacheControl {
   }
 }
 
-export default new CacheControl();
+const cacheControl = new CacheControl();
+
+export default cacheControl
