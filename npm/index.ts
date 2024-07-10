@@ -77,6 +77,22 @@ export async function createCacheControlResponse(
       (param) => !new URL(request.url).searchParams.has(param)
     )
   ) {
+    if (options.etagCacheKey && redis) {
+      const etag = await redis.get(options.etagCacheKey);
+
+      if (etag) {
+        const requestEtag = request.headers.get('If-None-Match');
+        if (requestEtag === etag) {
+          return new Response(null, {
+            status: 304,
+            statusText: 'Not Modified',
+          });
+        }
+
+        response.headers.set('ETag', etag);
+      }
+    }
+
     response.headers.set(
       'Cache-Control',
       [
@@ -89,22 +105,6 @@ export async function createCacheControlResponse(
         .filter(Boolean)
         .join(', ')
     );
-
-    if (options.etagCacheKey && redis) {
-      const etag = await redis.get(options.etagCacheKey);
-
-      if (etag) {
-        response.headers.set('ETag', etag);
-
-        const requestEtag = request.headers.get('If-None-Match');
-        if (requestEtag === etag) {
-          return new Response(null, {
-            status: 304,
-            statusText: 'Not Modified',
-          });
-        }
-      }
-    }
   }
 
   return response;
