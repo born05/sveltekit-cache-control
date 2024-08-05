@@ -60,7 +60,7 @@ export async function createCacheControlResponse(
   redisUrl: string,
   opt: Partial<HeaderOptions>,
   request: Request,
-  response: Response | (() => MaybePromise<Response>) | null = null,
+  response: Response | (() => MaybePromise<Response>) | null = null
 ) {
   const options = {
     ...DEFAULT_HEADER_OPTIONS,
@@ -74,10 +74,14 @@ export async function createCacheControlResponse(
   const headers: Record<string, string> = {};
 
   if (
-    !request.headers.has('Authorization') &&
-    options.noCacheSearchParams.every((param) => !new URL(request.url).searchParams.has(param))
+    options.noCacheSearchParams.every(
+      (param) => !new URL(request.url).searchParams.has(param)
+    )
   ) {
-    if (options.etagCacheKey && redis) {
+    const allowPublicCaching =
+      options.public && !request.headers.has('Authorization');
+
+    if (allowPublicCaching && options.etagCacheKey && redis) {
       const etag = await redis.get(options.etagCacheKey);
 
       if (etag) {
@@ -95,7 +99,7 @@ export async function createCacheControlResponse(
 
     headers['Cache-Control'] = [
       options.private && 'private',
-      options.public && 'public',
+      allowPublicCaching && 'public',
       options.maxAge !== null && `max-age=${options.maxAge}`,
       options.sMaxAge !== null && `s-maxage=${options.maxAge}`,
       options.mustRevalidate && 'must-revalidate',
@@ -107,8 +111,8 @@ export async function createCacheControlResponse(
   const resp = !response
     ? new Response()
     : typeof response === 'function'
-      ? await response()
-      : response;
+    ? await response()
+    : response;
 
   if (resp.status !== 200) return resp;
 
@@ -119,7 +123,10 @@ export async function createCacheControlResponse(
   return resp;
 }
 
-export function cacheControlHandle(redisUrl: string, opt: Partial<HandleOptions>): Handle {
+export function cacheControlHandle(
+  redisUrl: string,
+  opt: Partial<HandleOptions>
+): Handle {
   const options = {
     ...DEFAULT_HANDLE_OPTIONS,
     ...opt,
@@ -138,8 +145,11 @@ export function cacheControlHandle(redisUrl: string, opt: Partial<HandleOptions>
       options.methods.includes(event.request.method) &&
       options.routes.some((route) => new RegExp(route).test(event.url.pathname))
     ) {
-      return await createCacheControlResponse(redisUrl, options, event.request, () =>
-        resolve(event),
+      return await createCacheControlResponse(
+        redisUrl,
+        options,
+        event.request,
+        () => resolve(event)
       );
     }
 
