@@ -101,7 +101,7 @@ export async function createCacheControlResponse(
       options.private && 'private',
       allowPublicCaching && 'public',
       options.maxAge !== null && `max-age=${options.maxAge}`,
-      options.sMaxAge !== null && `s-maxage=${options.maxAge}`,
+      options.sMaxAge !== null && `s-maxage=${options.sMaxAge}`,
       options.mustRevalidate && 'must-revalidate',
     ]
       .filter(Boolean)
