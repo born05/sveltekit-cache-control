@@ -98,8 +98,8 @@ export async function createCacheControlResponse(
     }
 
     headers['Cache-Control'] = [
-      options.private && 'private',
-      allowPublicCaching && 'public',
+      options.private && !options.public && 'private',
+      allowPublicCaching && !options.private && 'public',
       options.maxAge !== null && `max-age=${options.maxAge}`,
       options.sMaxAge !== null && `s-maxage=${options.sMaxAge}`,
       options.mustRevalidate && 'must-revalidate',
