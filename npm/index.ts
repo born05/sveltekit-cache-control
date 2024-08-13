@@ -24,7 +24,7 @@ const DEFAULT_HEADER_OPTIONS: HeaderOptions = {
   mustRevalidate: false,
   maxAge: 60,
   sMaxAge: null,
-  public: true,
+  public: false,
   private: false,
   noCache: false,
   etagCacheKey: 'cache-control-etag',
@@ -78,10 +78,7 @@ export async function createCacheControlResponse(
       (param) => !new URL(request.url).searchParams.has(param)
     )
   ) {
-    const allowPublicCaching =
-      options.public && !request.headers.has('Authorization');
-
-    if (allowPublicCaching && options.etagCacheKey && redis) {
+    if (options.etagCacheKey && redis) {
       const etag = await redis.get(options.etagCacheKey);
 
       if (etag) {
@@ -98,8 +95,11 @@ export async function createCacheControlResponse(
     }
 
     headers['Cache-Control'] = [
+      options.public &&
+        !request.headers.has('Authorization') &&
+        !options.private &&
+        'public',
       options.private && !options.public && 'private',
-      allowPublicCaching && !options.private && 'public',
       options.maxAge !== null && `max-age=${options.maxAge}`,
       options.sMaxAge !== null && `s-maxage=${options.sMaxAge}`,
       options.mustRevalidate && 'must-revalidate',
