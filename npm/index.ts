@@ -72,65 +72,67 @@ export async function createCacheControlResponse(
     ...opt,
   };
 
-  if (!redis) {
-    initRedis(redisUrl);
-  }
-
   const headers: Record<string, string> = {};
 
-  if (
-    options.noCacheSearchParams.every(
-      (param) => !new URL(request.url).searchParams.has(param)
-    )
-  ) {
-    if (options.etagCacheKey && redis) {
-      const etag = await redis.get(options.etagCacheKey);
-
-      if (etag) {
-        const requestEtag = request.headers.get('If-None-Match');
-        if (requestEtag === etag) {
-          return new Response(null, {
-            status: 304,
-            statusText: 'Not Modified',
-          });
-        }
-
-        headers.ETag = etag;
-      }
+  if (options.enabled) {
+    if (!redis) {
+      initRedis(redisUrl);
     }
 
-    const joinParts = (p: (string | null | undefined | boolean)[]) =>
-      p.filter(Boolean).join(', ');
-
-    // Private only cache control
     if (
-      options.strategy === CACHE_STRATEGY_PRIVATE_ONLY ||
-      (options.strategy === CACHE_STRATEGY_PRIVATE_AND_PUBLIC &&
-        request.headers.has('Authorization'))
+      options.noCacheSearchParams.every(
+        (param) => !new URL(request.url).searchParams.has(param)
+      )
     ) {
-      headers['Cache-Control'] = joinParts([
-        'private',
-        options.maxAge !== null && `max-age=${options.maxAge}`,
-      ]);
-    }
-    // Private and public cache control (default)
-    else if (options.strategy === CACHE_STRATEGY_PRIVATE_AND_PUBLIC) {
-      headers['Cache-Control'] = joinParts([
-        options.maxAge !== null && `max-age=${options.maxAge}`,
-        options.sMaxAge !== null && `s-maxage=${options.sMaxAge}`,
-      ]);
-    }
-    // Force public cache control
-    else if (options.strategy === CACHE_STRATEGY_FORCE_PUBLIC) {
-      headers['Cache-Control'] = joinParts([
-        'public',
-        options.maxAge !== null && `max-age=${options.maxAge}`,
-        options.sMaxAge !== null && `s-maxage=${options.sMaxAge}`,
-      ]);
-    }
-    // No cache control
-    else if (options.strategy === CACHE_STRATEGY_NO_CACHE) {
-      headers['Cache-Control'] = 'no-cache';
+      if (options.etagCacheKey && redis) {
+        const etag = await redis.get(options.etagCacheKey);
+
+        if (etag) {
+          const requestEtag = request.headers.get('If-None-Match');
+          if (requestEtag === etag) {
+            return new Response(null, {
+              status: 304,
+              statusText: 'Not Modified',
+            });
+          }
+
+          headers.ETag = etag;
+        }
+      }
+
+      const joinParts = (p: (string | null | undefined | boolean)[]) =>
+        p.filter(Boolean).join(', ');
+
+      // Private only cache control
+      if (
+        options.strategy === CACHE_STRATEGY_PRIVATE_ONLY ||
+        (options.strategy === CACHE_STRATEGY_PRIVATE_AND_PUBLIC &&
+          request.headers.has('Authorization'))
+      ) {
+        headers['Cache-Control'] = joinParts([
+          'private',
+          options.maxAge !== null && `max-age=${options.maxAge}`,
+        ]);
+      }
+      // Private and public cache control (default)
+      else if (options.strategy === CACHE_STRATEGY_PRIVATE_AND_PUBLIC) {
+        headers['Cache-Control'] = joinParts([
+          options.maxAge !== null && `max-age=${options.maxAge}`,
+          options.sMaxAge !== null && `s-maxage=${options.sMaxAge}`,
+        ]);
+      }
+      // Force public cache control
+      else if (options.strategy === CACHE_STRATEGY_FORCE_PUBLIC) {
+        headers['Cache-Control'] = joinParts([
+          'public',
+          options.maxAge !== null && `max-age=${options.maxAge}`,
+          options.sMaxAge !== null && `s-maxage=${options.sMaxAge}`,
+        ]);
+      }
+      // No cache control
+      else if (options.strategy === CACHE_STRATEGY_NO_CACHE) {
+        headers['Cache-Control'] = 'no-cache';
+      }
     }
   }
 
