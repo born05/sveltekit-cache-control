@@ -2,14 +2,22 @@ import type { Handle, MaybePromise } from '@sveltejs/kit';
 import Redis from 'ioredis';
 import { captureException } from '@sentry/sveltekit';
 
+const CACHE_STRATEGY_PRIVATE_ONLY = 'private-only';
+const CACHE_STRATEGY_PRIVATE_AND_PUBLIC = 'private-and-public';
+const CACHE_STRATEGY_FORCE_PUBLIC = 'force-public';
+const CACHE_STRATEGY_NO_CACHE = 'no-cache';
+
+type CacheStrategy =
+  | typeof CACHE_STRATEGY_PRIVATE_ONLY
+  | typeof CACHE_STRATEGY_PRIVATE_AND_PUBLIC
+  | typeof CACHE_STRATEGY_FORCE_PUBLIC
+  | typeof CACHE_STRATEGY_NO_CACHE;
+
 interface HeaderOptions {
   enabled: boolean;
-  mustRevalidate: boolean;
   maxAge: number | null;
   sMaxAge: number | null;
-  public: boolean;
-  private: boolean;
-  noCache: boolean;
+  strategy: CacheStrategy;
   etagCacheKey: string;
   noCacheSearchParams: string[];
 }
@@ -21,12 +29,9 @@ interface HandleOptions extends HeaderOptions {
 
 const DEFAULT_HEADER_OPTIONS: HeaderOptions = {
   enabled: true,
-  mustRevalidate: false,
   maxAge: 60,
   sMaxAge: null,
-  public: false,
-  private: false,
-  noCache: false,
+  strategy: CACHE_STRATEGY_PRIVATE_AND_PUBLIC,
   etagCacheKey: 'cache-control-etag',
   noCacheSearchParams: ['preview'],
 };
@@ -90,22 +95,43 @@ export async function createCacheControlResponse(
           });
         }
 
-        headers['ETag'] = etag;
+        headers.ETag = etag;
       }
     }
 
-    headers['Cache-Control'] = [
-      options.public &&
-        !request.headers.has('Authorization') &&
-        !options.private &&
+    const joinParts = (p: (string | null | undefined | boolean)[]) =>
+      p.filter(Boolean).join(', ');
+
+    // Private only cache control
+    if (
+      options.strategy === CACHE_STRATEGY_PRIVATE_ONLY ||
+      (options.strategy === CACHE_STRATEGY_PRIVATE_AND_PUBLIC &&
+        request.headers.has('Authorization'))
+    ) {
+      headers['Cache-Control'] = joinParts([
+        'private',
+        options.maxAge !== null && `max-age=${options.maxAge}`,
+      ]);
+    }
+    // Private and public cache control (default)
+    else if (options.strategy === CACHE_STRATEGY_PRIVATE_AND_PUBLIC) {
+      headers['Cache-Control'] = joinParts([
+        options.maxAge !== null && `max-age=${options.maxAge}`,
+        options.sMaxAge !== null && `s-maxage=${options.sMaxAge}`,
+      ]);
+    }
+    // Force public cache control
+    else if (options.strategy === CACHE_STRATEGY_FORCE_PUBLIC) {
+      headers['Cache-Control'] = joinParts([
         'public',
-      options.private && !options.public && 'private',
-      options.maxAge !== null && `max-age=${options.maxAge}`,
-      options.sMaxAge !== null && `s-maxage=${options.sMaxAge}`,
-      options.mustRevalidate && 'must-revalidate',
-    ]
-      .filter(Boolean)
-      .join(', ');
+        options.maxAge !== null && `max-age=${options.maxAge}`,
+        options.sMaxAge !== null && `s-maxage=${options.sMaxAge}`,
+      ]);
+    }
+    // No cache control
+    else if (options.strategy === CACHE_STRATEGY_NO_CACHE) {
+      headers['Cache-Control'] = 'no-cache';
+    }
   }
 
   const resp = !response
