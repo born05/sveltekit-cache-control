@@ -1,4 +1,4 @@
-import type { Handle, MaybePromise } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit';
 import Redis from 'ioredis';
 import { captureException } from '@sentry/sveltekit';
 
@@ -65,7 +65,7 @@ export async function createCacheControlResponse(
   redisUrl: string,
   opt: Partial<HeaderOptions>,
   request: Request,
-  response: Response | (() => MaybePromise<Response>) | null = null
+  response: Response | (() => Response | Promise<Response>) | null = null
 ) {
   const options = {
     ...DEFAULT_HEADER_OPTIONS,
@@ -84,22 +84,6 @@ export async function createCacheControlResponse(
         (param) => !new URL(request.url).searchParams.has(param)
       )
     ) {
-      if (options.etagCacheKey && redis) {
-        const etag = await redis.get(options.etagCacheKey);
-
-        if (etag) {
-          const requestEtag = request.headers.get('If-None-Match');
-          if (requestEtag === etag) {
-            return new Response(null, {
-              status: 304,
-              statusText: 'Not Modified',
-            });
-          }
-
-          headers.ETag = etag;
-        }
-      }
-
       const joinParts = (p: (string | null | undefined | boolean)[]) =>
         p.filter(Boolean).join(', ');
 
@@ -132,6 +116,23 @@ export async function createCacheControlResponse(
       // No cache control
       else if (options.strategy === CACHE_STRATEGY_NO_CACHE) {
         headers['Cache-Control'] = 'no-cache';
+      }
+
+      if (options.etagCacheKey && redis) {
+        const etag = await redis.get(options.etagCacheKey);
+
+        if (etag) {
+          headers.ETag = etag;
+
+          const requestEtag = request.headers.get('If-None-Match');
+          if (requestEtag === etag) {
+            return new Response(null, {
+              status: 304,
+              statusText: 'Not Modified',
+              headers,
+            });
+          }
+        }
       }
     }
   }
