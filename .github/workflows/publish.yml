@@ -19,7 +19,7 @@ jobs:
           npm ci --include=dev
           npm run build
           npm version --git-tag-version=false ${{ github.ref_name }}
-          npm publish
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
@@ -36,6 +36,6 @@ jobs:
           npm ci --include=dev
           npm run build
           npm version --git-tag-version=false ${{ github.ref_name }}
-          npm publish
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
