@@ -1,21 +1,21 @@
 {
   "name": "born05/craft-cache-control",
-  "version": "1.0.8",
   "type": "craft-plugin",
+  "license": "MIT",
+  "homepage": "https://github.com/born05/sveltekit-cache-control",
   "require": {
     "php": ">=8.0.2",
     "craftcms/cms": ">=4.0.0"
   },
   "autoload": {
     "psr-4": {
-      "born05\\craftcachecontrol\\": "composer/src"
+      "born05\\craftcachecontrol\\": "src"
     }
   },
   "extra": {
     "handle": "cache-control",
     "name": "Cache control",
-    "developer": "Born05",
-    "documentationUrl": ""
+    "developer": "Born05"
   },
   "config": {
     "sort-packages": true,

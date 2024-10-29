@@ -65,7 +65,7 @@ export async function createCacheControlResponse(
   redisUrl: string,
   opt: Partial<HeaderOptions>,
   request: Request,
-  response: Response | (() => Response | Promise<Response>) | null = null
+  response: Response | (() => Response | Promise<Response>) | null = null,
 ) {
   const options = {
     ...DEFAULT_HEADER_OPTIONS,
@@ -81,7 +81,7 @@ export async function createCacheControlResponse(
 
     if (
       options.noCacheSearchParams.every(
-        (param) => !new URL(request.url).searchParams.has(param)
+        (param) => !new URL(request.url).searchParams.has(param),
       )
     ) {
       const joinParts = (p: (string | null | undefined | boolean)[]) =>
@@ -140,8 +140,8 @@ export async function createCacheControlResponse(
   const resp = !response
     ? new Response()
     : typeof response === 'function'
-    ? await response()
-    : response;
+      ? await response()
+      : response;
 
   if (resp.status !== 200) return resp;
 
@@ -154,7 +154,7 @@ export async function createCacheControlResponse(
 
 export function cacheControlHandle(
   redisUrl: string,
-  opt: Partial<HandleOptions>
+  opt: Partial<HandleOptions>,
 ): Handle {
   const options = {
     ...DEFAULT_HANDLE_OPTIONS,
@@ -178,7 +178,7 @@ export function cacheControlHandle(
         redisUrl,
         options,
         event.request,
-        () => resolve(event)
+        () => resolve(event),
       );
     }
 
