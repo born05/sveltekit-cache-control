@@ -13,11 +13,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: "https://registry.npmjs.org"
       - run: |
           cd npm
           npm ci --include=dev
           npm run build
+          npm version ${{ github.ref_name }}
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
@@ -34,6 +35,7 @@ jobs:
           cd npm
           npm ci --include=dev
           npm run build
+          npm version ${{ github.ref_name }}
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
