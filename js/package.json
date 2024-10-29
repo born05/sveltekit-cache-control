@@ -2,7 +2,6 @@
   "name": "@born05/sveltekit-cache-control",
   "description": "A simple way to add control caching in your SvelteKit project.",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "build": "npx tsc",
     "lint": "prettier --check . && eslint .",
